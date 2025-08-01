@@ -1,0 +1,17 @@
+{
+  "name": "workspaces",
+  "version": "0.0.1",
+  "description": "Actividad con el profe EWIN",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "node .\\app.js"
+  },
+  "author": "sovm",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "inquirer": "^12.8.2",
+    "mongodb": "^6.17.0"
+  }
+}
