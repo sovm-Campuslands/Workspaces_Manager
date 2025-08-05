@@ -6,7 +6,7 @@ const choices = [
     { name: '📃 Crear grupo de trabajo', value: createWorkspace, description: 'Crea un grupo de trabajo nuevo (vacio)' },
     { name: '✍🏼 Asignar Usuarios', value: assingUsers },
     { name: '🚩 Eliminar Usuarios de un grupo de trabajo', value: deleteFromWorkspace },
-    { name: '🚧 Salir', value: 'kill' },
+    { name: '🔙 Volver', value: 'kill' },
 
 ]
 

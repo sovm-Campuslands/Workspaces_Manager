@@ -3,13 +3,15 @@ import { DB } from "../utils/db.js"
 import { Factory } from "../Entities/EntityFactory.js"
 
 
+// AUXILIARES
 
-async function findWorkSpace() {
+export async function findWorkSpace() {
 
     const workspaces = await DB.getAll('workspaces')
+
     workspaces.push({ name: '🚩 Cancelar 🚩', value: 'kill' })
 
-    let workspace = await iList('📃 Grupo de Trabajo? 📃', workspaces)
+    let workspace = await iList('📃 SELECCIONE GRUPO DE TRABAJO 📃', workspaces)
 
     if (workspace.option === 'kill') {
         return 'kill'
@@ -21,6 +23,93 @@ async function findWorkSpace() {
     return savedWorkspace
 
 }
+
+export async function getUsersFromWorkspace(savedWorkspace) {
+
+    const users = await DB.aggregation('workspaces', [
+        { $match: { _id: savedWorkspace._id } },
+        { $unwind: "$workgroup" },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'workgroup',
+                foreignField: '_id',
+                as: "usuario"
+            }
+        },
+        { $unwind: "$usuario" },
+        {
+            $group: {
+                _id: null,
+                usuarios: { $addToSet: "$usuario" }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                usuarios: 1
+            }
+        }
+    ])
+
+    return users
+}
+
+export async function getTasks(savedWorkspace) {
+    const tasks = await DB.aggregation('workspaces', [
+        { $match: { _id: savedWorkspace._id } },
+        { $unwind: '$tasks' },
+        {
+            $lookup: {
+                from: 'tasks',
+                localField: 'tasks',
+                foreignField: '_id',
+                as: 'task'
+            }
+        },
+        { $unwind: '$task' },
+        { $unwind: { path: "$task.responsables", preserveNullAndEmptyArrays: true } },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'task.responsables',
+                foreignField: '_id',
+                as: 'responsable'
+            }
+        },
+        { $unwind: { path: "$responsable", preserveNullAndEmptyArrays: true } },
+        {
+            $group: {
+                _id: "$task._id",
+                tarea: { $first: "$task.name" },
+                description: { $first: "$task.description" },
+                responsables: {
+                    $push: {
+                        $cond: [
+                            { $ifNull: ["$responsable", false] },
+                            {
+                                code: "$responsable._id",
+                                name: "$responsable.name",
+                                email: "$responsable.email"
+                            }, "$$REMOVE"
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                tarea: 1,
+                description: 1,
+                responsables: 1
+            }
+        }
+    ])
+    return tasks
+}
+
+// PRINCIPALES
 
 export async function createWorkspace() {
 
@@ -96,6 +185,7 @@ export async function editWorkSpace() {
 }
 
 export async function deleteFromWorkspace() {
+
     const savedWorkspace = await findWorkSpace()
 
     if (savedWorkspace === 'kill') {
@@ -103,37 +193,15 @@ export async function deleteFromWorkspace() {
         return
     }
 
-    let users = await DB.aggregation('workspaces', [
-        { $match: { _id: savedWorkspace._id } },
-        { $unwind: "$workgroup" },
-        {
-            $lookup: {
-                from: 'users',
-                localField: 'workgroup',
-                foreignField: '_id',
-                as: "empleado"
-            }
-        },
-        { $unwind: "$empleado" },
-        {
-            $group: {
-                _id: null,
-                empleados: { $addToSet: "$empleado" }
-            }
-        },
-        {
-            $project: {
-                _id: 0,
-                empleados: 1
-            }
-        }
-    ])
+    let users = await getUsersFromWorkspace(savedWorkspace)
+
     if (users.length === 0) {
         console.log(`❌ El grupo de trabajo no contiene usuarios`)
         return
     }
 
-    users = users[0].empleados
+    users = users[0].usuarios
+
     const choices = users.map(u => ({ name: u.name, value: u._id }))
     choices.push({ name: '🚩 Cancelar 🚩', value: 'kill' })
     const { option } = await iList('\n🚩 Que usuario desea eliminar? 🚩', choices)

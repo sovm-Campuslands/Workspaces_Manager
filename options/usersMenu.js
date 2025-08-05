@@ -5,7 +5,7 @@ const choices = [
     { name: '👱🏿 Registrarse', value: createAccount },
     { name: '✍🏼 Editar Información', value: updateUser },
     { name: '🚩 Solicitud de Eliminación', value: deleteAccount },
-    { name: '🚧 Salir', value: 'logout' },
+    { name: '🔙 Volver', value: 'kill' },
 ]
 
 export async function usersMenu() {
@@ -19,8 +19,8 @@ export async function usersMenu() {
             }
         ])
 
-        if (option === 'logout') {
-            console.log('💵 Terminando.. 💵')
+        if (option === 'kill') {
+            console.log('🚩 Cancelado.')
             return
         }
         await option()

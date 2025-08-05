@@ -78,6 +78,7 @@ export async function deleteAccount() {
 
 }
 
+
 export async function searchByName() {
     const name = await input('Nombre del usuario')
     const results = await DB.findByIndex('users', { name: name })
