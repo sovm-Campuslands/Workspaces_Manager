@@ -1,7 +1,7 @@
 {
-  "name": "workspaces",
+  "name": "workspaces_manager",
   "version": "0.0.1",
-  "description": "Actividad con el profe EWIN",
+  "description": "team groups manager using factory method, modularization, learning inquirer. CLI with some issues but fixeables.",
   "main": "app.js",
   "type": "module",
   "scripts": {
